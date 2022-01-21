@@ -1,1 +1,0 @@
-Train/Validation split Images in these folders
