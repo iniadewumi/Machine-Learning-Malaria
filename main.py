@@ -2,6 +2,8 @@ import cv2
 import pathlib, pickle
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn import svm
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 from cleaning_preprocess import ImageProcessor
@@ -19,8 +21,8 @@ UNINFECTED = IMG_DIR / 'Uninfected'
 MODELS = HOME / 'Models'
 
 
-def latest_file(path=MODELS):
-    files = path.glob("*.pickle")
+def latest_file(path=MODELS, model_type="RandomForest"):
+    files = [x for x in path.glob("*.pickle") if model_type in str(x)]
     return max(files, key=lambda x: x.stat().st_ctime)
 
 class MalariaModel():
@@ -35,7 +37,7 @@ class MalariaModel():
 
 
         if train:
-            self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.X, self.y, test_size=0.3, random_state=random_state)
+            self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.X, self.y, test_size=0.2, random_state=42)
             self.train_model()
         else:
             print("Since train == False, latest model will be loaded!")
@@ -50,15 +52,21 @@ class MalariaModel():
                 print(e)
                 return print("Failed to load model! Check model name... Models can be found in Models folder.")
             
-    def train_model(self):
-        self.trained_model = RandomForestClassifier(max_depth=10)
+    def train_model(self,):
+        classifier_type=input("What classifier would you like to use for training? (RandomForest, KNN, SVM): ")
+        print(f"Training model with {classifier_type}...")
+        if classifier_type == "SVM": 
+            print("Please Note that SVM will take significantly longer to train than other classifiers.")
+        classifiers = {"RandomForest": RandomForestClassifier(max_depth=5), "KNN": KNeighborsClassifier(n_neighbors=18), "SVM": svm.SVC()}
+        
+        self.trained_model = classifiers[classifier_type] #RandomForestClassifier(max_depth=5)
         self.trained_model.fit(self.x_train, self.y_train)
         self.predictions = self.trained_model.predict(self.x_test)
         print(classification_report(self.predictions, self.y_test))
         save_or_not = input("Save Model? (y or n) ")
         if save_or_not == "y":
-            models_count = sum(x.suffix==".pickle" for x in MODELS.iterdir())
-            model_name = MODELS/f"rand_forest({models_count}).pickle"
+            models_count = sum(x.suffix==".pickle" and classifier_type in x.name for x in MODELS.iterdir())
+            model_name = MODELS/f"{classifier_type}({models_count}).pickle"
             self.save_model(self.trained_model, model_name)
             print(f"\n\nModel saved as {model_name.name}")
         else:
@@ -76,6 +84,8 @@ class MalariaModel():
         Args:
             model_name ([type], optional): [description]. Defaults to None.
         """
+        model_type = input("What classifier do you want to load? (RandomForest, KNN or SVM) Default='RandomForest': ")
+        print(f"Loading latest {model_type} model...")
         if not model_name:
             model_name = str(latest_file())
         with open(model_name, "rb") as f:
@@ -94,7 +104,7 @@ class MalariaModel():
         
         
 if __name__ == "__main__":
-    malaria_model = MalariaModel()
+    malaria_model = MalariaModel(train=True)
     malaria_model.has_malaria()
     while True:
         cont = input("Predict New? (y or n)")
