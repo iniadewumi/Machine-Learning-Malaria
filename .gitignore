@@ -1,4 +1,4 @@
-data/train/Parasitized/*
-data/validation/Parasitized/*
-data/train/Uninfected/*
-data/validation/Uninfected/*
+data/train/Parasitized/*.png
+data/validation/Parasitized/*.png
+data/train/Uninfected/*.png
+data/validation/Uninfected/*.png
