@@ -1,2 +1,4 @@
-data/train*
-data/validation*
+data/train/Parasitized/*
+data/validation/Parasitized/*
+data/train/Uninfected/*
+data/validation/Uninfected/*
