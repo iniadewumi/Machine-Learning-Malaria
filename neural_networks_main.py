@@ -68,7 +68,7 @@ def train_model():
         target_size=(img_width, img_height),
         batch_size=batch_size,
         class_mode='binary')
-
+    
     model.fit_generator(
         train_generator,
         steps_per_epoch=nb_train_samples // batch_size,
